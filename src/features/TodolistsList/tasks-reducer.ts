@@ -1,12 +1,19 @@
-import { AddTodolistActionType, RemoveTodolistActionType, SetTodolistsActionType } from "./todolists-reducer";
-import { TaskPriorities, TaskStatuses, TaskType, todolistsAPI, UpdateTaskModelType } from "../../api/todolists-api";
+import {
+    TaskPriorities,
+    TaskStatuses,
+    TaskType,
+    todolistsAPI,
+    TodolistType,
+    UpdateTaskModelType
+} from "../../api/todolists-api";
 import { AppRootStateType, AppThunk } from "../../app/store";
 import { handleServerAppError, handleServerNetworkError } from "../../utils/error-utils";
 import { appActions } from "app/app-reducer";
+import {slice} from "./todolists-reducer";
 
 const initialState: TasksStateType = {};
 
-export const tasksReducer = (state: TasksStateType = initialState, action: ActionsType): TasksStateType => {
+export const tasksReducer = (state: TasksStateType = initialState, action: any): TasksStateType => {
   switch (action.type) {
     case "REMOVE-TASK":
       return { ...state, [action.todolistId]: state[action.todolistId].filter((t) => t.id != action.taskId) };
@@ -19,15 +26,15 @@ export const tasksReducer = (state: TasksStateType = initialState, action: Actio
           t.id === action.taskId ? { ...t, ...action.model } : t,
         ),
       };
-    case "ADD-TODOLIST":
-      return { ...state, [action.todolist.id]: [] };
+    case slice.actions.addTodolist.type:
+      return { ...state, [action.payload.todolist.id]: [] };
     case "REMOVE-TODOLIST":
       const copyState = { ...state };
       delete copyState[action.id];
       return copyState;
-    case "SET-TODOLISTS": {
+    case slice.actions.setTodolists.type: {
       const copyState = { ...state };
-      action.todolists.forEach((tl) => {
+      action.payload.todolists.forEach((tl: TodolistType) => {
         copyState[tl.id] = [];
       });
       return copyState;
@@ -139,7 +146,4 @@ type ActionsType =
   | ReturnType<typeof removeTaskAC>
   | ReturnType<typeof addTaskAC>
   | ReturnType<typeof updateTaskAC>
-  | AddTodolistActionType
-  | RemoveTodolistActionType
-  | SetTodolistsActionType
   | ReturnType<typeof setTasksAC>;
