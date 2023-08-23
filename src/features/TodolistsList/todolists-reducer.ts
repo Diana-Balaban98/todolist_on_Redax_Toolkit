@@ -3,16 +3,15 @@ import {appActions, RequestStatusType} from "../../app/app-reducer";
 import {handleServerNetworkError} from "../../utils/error-utils";
 import {AppThunk} from "../../app/store";
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {fetchTasksTC} from "./tasks-reducer";
 
-const initialState: Array<TodolistDomainType> = [];
 
 export const slice = createSlice({
     name: "todolists",
-    initialState,
+    initialState: [] as TodolistDomainType[],
     reducers: {
         setTodolists(state, action: PayloadAction<{ todolists: TodolistType[] }>) {
-            return action.payload.todolists.map((tl) => ({...tl, filter: "all", entityStatus: "idle"}));
-
+            return action.payload.todolists.map(tl => ({...tl, filter: "all", entityStatus: "idle"}))
         },
         removeTodolist(state, action: PayloadAction<{ id: string }>) {
             const findIdTodolist = state.findIndex(tl => tl.id === action.payload.id)
@@ -44,14 +43,15 @@ export const slice = createSlice({
             if (findIdTodolist !== -1) {
                 state[findIdTodolist].entityStatus = action.payload.entityStatus
             }
+        },
+        clearTodolistsAndTasks(state, action) {
+          state.map(tl => ({}))
         }
     }
 })
 
 export const todolistsReducer = slice.reducer;
 export const todolistsActions = slice.actions;
-console.log(slice)
-
 
 
 // thunks
@@ -61,6 +61,9 @@ export const fetchTodolistsTC = (): AppThunk => {
         todolistsAPI
             .getTodolists()
             .then((res) => {
+                res.data.forEach(tl => {
+                    dispatch(fetchTasksTC(tl.id))
+                })
                 dispatch(todolistsActions.setTodolists({todolists: res.data}));
                 dispatch(appActions.setAppStatus({status: "succeeded"}));
             })
@@ -84,6 +87,7 @@ export const removeTodolistTC = (todolistId: string): AppThunk => {
 };
 export const addTodolistTC = (title: string): AppThunk => {
     return (dispatch) => {
+        debugger
         dispatch(appActions.setAppStatus({status: "loading"}));
         todolistsAPI.createTodolist(title).then((res) => {
             dispatch(todolistsActions.addTodolist({todolist: res.data.data.item}));

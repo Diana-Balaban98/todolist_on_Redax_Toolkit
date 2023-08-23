@@ -2,22 +2,19 @@ import {TaskPriorities, TaskStatuses, TaskType, todolistsAPI, UpdateTaskModelTyp
 import {AppRootStateType, AppThunk} from "../../app/store";
 import {handleServerAppError, handleServerNetworkError} from "../../utils/error-utils";
 import {appActions} from "app/app-reducer";
-import {createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {createSlice, current, PayloadAction} from "@reduxjs/toolkit";
 import {todolistsActions} from "./todolists-reducer";
-
-const initialState: TasksStateType = {};
 
 const slice = createSlice({
     name: "tasks",
-    initialState,
+    initialState: {} as TasksStateType,
     reducers: {
-        setTasks(state, action: PayloadAction<{ tasks: TaskType[] }>) {
-            action.payload.tasks.forEach(t => {
-                state[t.todoListId] = action.payload.tasks
-            })
+        setTasks(state, action: PayloadAction<{ tasks: TaskType[], todolistId: string }>) {
+            const tasks = current(state)
+            state[action.payload.todolistId] = action.payload.tasks;
         },
         addTask(state, action: PayloadAction<{ task: TaskType }>) {
-            state[action.payload.task.todoListId].unshift(action.payload.task)
+            state[action.payload.task.todoListId].unshift(action.payload.task);
         },
         removeTask(state, action: PayloadAction<{ taskId: string, todolistId: string }>) {
             const tasks = state[action.payload.todolistId];
@@ -43,13 +40,17 @@ const slice = createSlice({
     extraReducers: builder => {
         builder
             .addCase(todolistsActions.setTodolists, (state, action) => {
-            action.payload.todolists.forEach(tl => {
-                state[tl.id] = [];
-            });
-        }).addCase(todolistsActions.addTodolist, (state, action) => {
-            state[action.payload.todolist.id] = []
+                action.payload.todolists.forEach(tl => {
+                    state[tl.id] = [];
+                });
+            }).addCase(todolistsActions.addTodolist, (state, action) => {
+            state[action.payload.todolist.id] = [];
         }).addCase(todolistsActions.removeTodolist, (state, action) => {
-            delete state[action.payload.id]
+            delete state[action.payload.id];
+        }).addCase(todolistsActions.clearTodolistsAndTasks, (state, action) => {
+            // for (let key in state) {
+            //     delete state[key];
+            // }
         })
     }
 })
@@ -65,7 +66,7 @@ export const fetchTasksTC =
             dispatch(appActions.setAppStatus({status: "loading"}));
             todolistsAPI.getTasks(todolistId).then((res) => {
                 const tasks = res.data.items;
-                dispatch(tasksActions.setTasks({tasks}));
+                dispatch(tasksActions.setTasks({tasks, todolistId}));
                 dispatch(appActions.setAppStatus({status: "succeeded"}));
             });
         };
@@ -103,8 +104,8 @@ export const updateTaskTC =
             const state = getState();
             const task = state.tasks[todolistId].find((t) => t.id === taskId);
             if (!task) {
-                //throw new Error("task not found in the state");
-                console.warn("task not found in the state");
+                //throw new Error("tasks not found in the state");
+                console.warn("tasks not found in the state");
                 return;
             }
 
