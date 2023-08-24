@@ -2,7 +2,7 @@ import {todolistsAPI, TodolistType} from "../../api/todolists-api";
 import {appActions, RequestStatusType} from "../../app/app-reducer";
 import {handleServerNetworkError} from "../../utils/error-utils";
 import {AppThunk} from "../../app/store";
-import {createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {createSlice, current, PayloadAction} from "@reduxjs/toolkit";
 import {fetchTasksTC} from "./tasks-reducer";
 
 
@@ -37,15 +37,15 @@ export const slice = createSlice({
                 state[findIdTodolist].filter = action.payload.filter
             }
         },
+        clearTodolists(state, action) {
+            return [];
+        },
         changeTodolistEntityStatus(state, action: PayloadAction<{ id: string, entityStatus: RequestStatusType }>) {
             const findIdTodolist = state.findIndex(tl => tl.id === action.payload.id)
 
             if (findIdTodolist !== -1) {
                 state[findIdTodolist].entityStatus = action.payload.entityStatus
             }
-        },
-        clearTodolistsAndTasks(state, action) {
-          state.map(tl => ({}))
         }
     }
 })
@@ -61,13 +61,14 @@ export const fetchTodolistsTC = (): AppThunk => {
         todolistsAPI
             .getTodolists()
             .then((res) => {
-                res.data.forEach(tl => {
-                    dispatch(fetchTasksTC(tl.id))
-                })
                 dispatch(todolistsActions.setTodolists({todolists: res.data}));
                 dispatch(appActions.setAppStatus({status: "succeeded"}));
-            })
-            .catch((error) => {
+                return res.data;
+            }).then(todolists => {
+                 todolists.forEach(tl => {
+                    dispatch(fetchTasksTC(tl.id))
+                 })
+            }).catch(error => {
                 handleServerNetworkError(error, dispatch);
             });
     };

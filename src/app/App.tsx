@@ -33,11 +33,6 @@ function App({demo = false}: PropsType) {
 
     useEffect(() => {
         dispatch(initializeAppTC());
-
-        if (!isLoggedIn) {
-            // dispatch(todolistsActions.setTodolists({todolists: []}))
-            dispatch(todolistsActions.clearTodolistsAndTasks({}))
-        };
     }, []);
 
     const logoutHandler = useCallback(() => {

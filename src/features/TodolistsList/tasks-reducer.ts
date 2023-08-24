@@ -47,10 +47,8 @@ const slice = createSlice({
             state[action.payload.todolist.id] = [];
         }).addCase(todolistsActions.removeTodolist, (state, action) => {
             delete state[action.payload.id];
-        }).addCase(todolistsActions.clearTodolistsAndTasks, (state, action) => {
-            // for (let key in state) {
-            //     delete state[key];
-            // }
+        }).addCase(todolistsActions.clearTodolists, (state, action) => {
+            return {}
         })
     }
 })
